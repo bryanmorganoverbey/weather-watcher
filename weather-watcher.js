@@ -108,6 +108,43 @@ async function runWeatherWatcher() {
             console.log('No privacy banner to close');
         }
 
+        // Make browser window full screen using xdotool (early, so we can see if it works)
+        // Browser should already be active
+        console.log('Making browser full screen with xdotool...');
+        try {
+            if (IS_DEBIAN) {
+                // On Debian/Raspberry Pi, send keypresses to active window
+
+                // Try F11 first
+                console.log('Attempting F11...');
+                await execPromise('xdotool key F11');
+                await page.waitForTimeout(1000);
+
+                // Try Fn+F11 combination (some keyboards require this)
+                console.log('Attempting Fn+F11 (XF86Switch_VT_11)...');
+                try {
+                    await execPromise('xdotool key XF86Switch_VT_11');
+                } catch (err) {
+                    console.log('XF86Switch_VT_11 not available');
+                }
+                await page.waitForTimeout(1000);
+
+                // Try alternative Fn+F11 mapping
+                console.log('Attempting Super+F11...');
+                try {
+                    await execPromise('xdotool key Super_L+F11');
+                } catch (err) {
+                    console.log('Super_L+F11 not available');
+                }
+
+                console.log('Fullscreen toggle attempts completed');
+                await page.waitForTimeout(3000); // Wait to see if fullscreen worked
+            }
+        } catch (error) {
+            console.log('Could not request fullscreen:', error.message);
+            console.log('Continuing anyway...');
+        }
+
         // Find and click the full-screen button in the radar UI
         console.log('Looking for full-screen button in radar UI...');
 
@@ -136,88 +173,6 @@ async function runWeatherWatcher() {
         } catch (error) {
             console.log('Play button not found, continuing anyway...');
         }
-
-        // Make browser window full screen using xdotool (after play is clicked)
-        // xdotool simulates F11 keypress at system level, bypassing Fn key requirements
-        console.log('Making browser full screen with xdotool...');
-        try {
-            if (IS_DEBIAN) {
-                // On Debian/Raspberry Pi, use xdotool to focus window and send F11 key
-                // Try multiple methods to find the browser window
-                console.log('Finding browser window...');
-
-                let windowId = null;
-
-                // Try multiple search strategies
-                const searchStrategies = [
-                    'xdotool search --class chromium | head -1',
-                    'xdotool search --class Chromium | head -1',
-                    'xdotool search --classname chromium | head -1',
-                    'xdotool search --name "AccuWeather" | head -1',
-                    'xdotool search --name "Chromium" | head -1',
-                    'xdotool getactivewindow'  // Get currently active window as fallback
-                ];
-
-                for (const strategy of searchStrategies) {
-                    try {
-                        console.log(`Trying: ${strategy}`);
-                        const { stdout } = await execPromise(strategy);
-                        if (stdout && stdout.trim()) {
-                            windowId = stdout.trim();
-                            console.log(`Found window ID: ${windowId} using: ${strategy}`);
-                            break;
-                        }
-                    } catch (err) {
-                        // Try next strategy
-                        continue;
-                    }
-                }
-
-                if (windowId) {
-                    // Focus the window
-                    await execPromise(`xdotool windowactivate ${windowId}`);
-                    console.log('Window activated');
-
-                    // Wait a moment for window to focus
-                    await page.waitForTimeout(500);
-
-                    // Try F11 first
-                    console.log('Attempting F11...');
-                    await execPromise(`xdotool key --window ${windowId} F11`);
-                    await page.waitForTimeout(1000);
-
-                    // Try Fn+F11 combination (some keyboards require this)
-                    console.log('Attempting Fn+F11...');
-                    await execPromise(`xdotool key --window ${windowId} XF86Switch_VT_11`);
-                    await page.waitForTimeout(1000);
-
-                    // Try alternative Fn+F11 mapping
-                    console.log('Attempting alternative Fn+F11...');
-                    await execPromise(`xdotool key --window ${windowId} Super_L+F11`);
-
-                    console.log('Fullscreen toggle attempts completed');
-                } else {
-                    console.log('Could not find browser window, trying generic keypresses to active window...');
-                    await execPromise('xdotool key F11');
-                    await page.waitForTimeout(1000);
-                    await execPromise('xdotool key XF86Switch_VT_11');
-                    await page.waitForTimeout(1000);
-                    await execPromise('xdotool key Super_L+F11');
-                }
-            } else {
-                // On macOS, use JavaScript fullscreen API
-                await page.evaluate(() => {
-                    if (document.documentElement.requestFullscreen) {
-                        document.documentElement.requestFullscreen();
-                    }
-                });
-                console.log('Fullscreen requested via JavaScript');
-            }
-        } catch (error) {
-            console.log('Could not request fullscreen:', error.message);
-            console.log('Continuing anyway...');
-        }
-        await page.waitForTimeout(5000); // Wait 5 seconds for fullscreen transition
 
         // Run for 10 minutes
         console.log('');
