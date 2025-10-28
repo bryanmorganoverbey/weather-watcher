@@ -1,0 +1,21 @@
+{
+  "name": "weather-watcher",
+  "version": "1.0.0",
+  "description": "A repo of bash scripts and node scripts that install and track weather using browser automation",
+  "main": "weather-watcher.js",
+  "scripts": {
+    "start": "node weather-watcher.js"
+  },
+  "keywords": [
+    "weather",
+    "automation",
+    "playwright",
+    "accuweather",
+    "radar"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.40.0"
+  }
+}
