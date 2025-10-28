@@ -19,31 +19,6 @@ fi
 echo "Step 1: Installing system dependencies..."
 echo ""
 sudo apt-get update
-
-# Try to install xdotool
-echo "Attempting to install xdotool..."
-if sudo apt-get install -y xdotool 2>/dev/null; then
-    echo "xdotool installed successfully"
-else
-    echo "Warning: Could not install xdotool from default repositories"
-    echo "Trying to install from universe repository..."
-
-    # Try adding universe repository (for Ubuntu/Debian)
-    sudo add-apt-repository universe 2>/dev/null || true
-    sudo apt-get update
-
-    if sudo apt-get install -y xdotool 2>/dev/null; then
-        echo "xdotool installed successfully from universe"
-    else
-        echo "Warning: xdotool could not be installed"
-        echo "You may need to install it manually later:"
-        echo "  sudo apt-get install xdotool"
-        echo ""
-        echo "Continuing with installation..."
-    fi
-fi
-
-# Install curl if not present
 sudo apt-get install -y curl
 echo ""
 

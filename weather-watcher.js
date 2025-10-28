@@ -1,8 +1,5 @@
 require('dotenv').config();
 const { chromium } = require('playwright');
-const { exec } = require('child_process');
-const util = require('util');
-const execPromise = util.promisify(exec);
 
 /**
  * Weather Watcher - AccuWeather Radar Automation
@@ -126,38 +123,28 @@ async function runWeatherWatcher() {
             console.log('No privacy banner to close');
         }
 
-        // Make browser window full screen using xdotool (early, so we can see if it works)
-        // Browser should already be active
-        console.log('Making browser full screen with xdotool...');
+        // Request fullscreen using JavaScript API (early, so we can see if it works)
+        console.log('Requesting browser fullscreen via JavaScript...');
         try {
-            if (IS_DEBIAN) {
-                // On Debian/Raspberry Pi, send keypresses to active window
-
-                // Try F11 first
-                console.log('Attempting F11...');
-                await execPromise('xdotool key F11');
-                await page.waitForTimeout(1000);
-
-                // Try Fn+F11 combination (some keyboards require this)
-                console.log('Attempting Fn+F11 (XF86Switch_VT_11)...');
-                try {
-                    await execPromise('xdotool key XF86Switch_VT_11');
-                } catch (err) {
-                    console.log('XF86Switch_VT_11 not available');
+            await page.evaluate(() => {
+                // Request fullscreen on the document element
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.log('Fullscreen request failed:', err);
+                    });
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    // Safari/older browsers
+                    document.documentElement.webkitRequestFullscreen();
+                } else if (document.documentElement.mozRequestFullScreen) {
+                    // Firefox
+                    document.documentElement.mozRequestFullScreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    // IE/Edge
+                    document.documentElement.msRequestFullscreen();
                 }
-                await page.waitForTimeout(1000);
-
-                // Try alternative Fn+F11 mapping
-                console.log('Attempting Super+F11...');
-                try {
-                    await execPromise('xdotool key Super_L+F11');
-                } catch (err) {
-                    console.log('Super_L+F11 not available');
-                }
-
-                console.log('Fullscreen toggle attempts completed');
-                await page.waitForTimeout(3000); // Wait to see if fullscreen worked
-            }
+            });
+            console.log('Fullscreen requested successfully');
+            await page.waitForTimeout(3000); // Wait to see if fullscreen worked
         } catch (error) {
             console.log('Could not request fullscreen:', error.message);
             console.log('Continuing anyway...');
