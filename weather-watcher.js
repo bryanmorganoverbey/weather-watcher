@@ -72,16 +72,28 @@ async function runWeatherWatcher() {
         const launchOptions = {
             headless: false, // Run in headed mode to display the UI
             args: [
+                '--start-maximized',  // Start browser maximized (required for fullscreen)
                 '--disable-infobars',
                 '--no-default-browser-check'
             ]
         };
 
+        // Add platform-specific args
+        if (IS_DEBIAN) {
+            // Raspberry Pi specific flags
+            launchOptions.args.push(
+                '--no-sandbox',  // Required for Raspberry Pi
+                '--disable-setuid-sandbox'  // Required for Raspberry Pi
+            );
+        }
+
         browser = await chromium.launch(launchOptions);
 
-        // Create a new browser context
+        // Create a new browser context with viewport: null
+        // IMPORTANT: viewport must be null when using --start-maximized
+        // Do NOT set deviceScaleFactor or any device descriptor
         context = await browser.newContext({
-            viewport: null, // Disable viewport to allow full screen
+            viewport: null, // Required: null viewport allows fullscreen
             acceptDownloads: false
         });
 
