@@ -154,10 +154,20 @@ async function runWeatherWatcher() {
             console.log('Play button not found, continuing anyway...');
         }
 
-        // Make browser window full screen with F11 key (after play is clicked)
-        console.log('Making browser full screen with F11...');
-        await page.keyboard.press('F11');
-        await page.waitForTimeout(5000); // Wait 5 seconds after F11 keypress
+        // Make browser window full screen using JavaScript (after play is clicked)
+        // This is more reliable than F11 which may require Fn key on some keyboards
+        console.log('Making browser full screen...');
+        try {
+            await page.evaluate(() => {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                }
+            });
+            console.log('Fullscreen requested via JavaScript');
+        } catch (error) {
+            console.log('Could not request fullscreen, continuing anyway...');
+        }
+        await page.waitForTimeout(5000); // Wait 5 seconds for fullscreen transition
 
         // Run for 10 minutes
         console.log('');
