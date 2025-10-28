@@ -41,24 +41,47 @@ echo "npm version installed:"
 npm --version
 echo ""
 
-# Install Playwright globally
-echo "Step 2: Installing Playwright globally..."
+# Install project dependencies
+echo "Step 2: Installing project dependencies..."
 echo ""
-sudo npm install -g playwright
+cd "$(dirname "$0")"
+npm install
 
 # Install Playwright browsers
 echo ""
 echo "Step 3: Installing Playwright browsers..."
 echo "Note: This may take several minutes..."
 echo ""
-sudo npx playwright install chromium
-sudo npx playwright install-deps chromium
+npx playwright install chromium
+npx playwright install-deps chromium
+
+# Create .env file for Raspberry Pi
+echo ""
+echo "Step 4: Creating environment configuration..."
+echo ""
+if [ ! -f .env ]; then
+    echo "Creating .env file for Raspberry Pi..."
+    cat > .env << 'EOF'
+# Platform Configuration
+# Set to 'debian' for Raspberry Pi
+PLATFORM=debian
+
+# Display Configuration
+DISPLAY=:0
+EOF
+    echo ".env file created successfully"
+else
+    echo ".env file already exists, skipping..."
+fi
 
 echo ""
 echo "==================================="
 echo "Installation Complete!"
 echo "==================================="
 echo ""
-echo "You can now run the weather watcher script:"
+echo "You can now run the weather watcher:"
+echo "  npm start"
+echo ""
+echo "Or run directly:"
 echo "  node weather-watcher.js"
 echo ""

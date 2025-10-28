@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  weather-watcher:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: weather-watcher
+    restart: unless-stopped
+    environment:
+      - PLATFORM=debian
+      - DISPLAY=:99
+      - TZ=America/Chicago # Adjust timezone as needed
+    # Uncomment below to expose VNC for debugging (connect with VNC viewer to localhost:5900)
+    # ports:
+    #   - "5900:5900"
+    # Optional: Mount logs directory if you want to persist logs
+    # volumes:
+    #   - ./logs:/app/logs
+    # Resource limits (optional)
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          cpus: "1"
+          memory: 512M

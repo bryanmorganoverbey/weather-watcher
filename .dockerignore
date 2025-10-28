@@ -1,0 +1,27 @@
+# Node modules (will be installed in container)
+node_modules/
+npm-debug.log
+
+# Git files
+.git/
+.gitignore
+
+# Environment files (will be created in container)
+.env
+.env.*
+!env.example
+
+# Documentation
+README.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+

@@ -1,21 +1,41 @@
+require('dotenv').config();
 const { chromium } = require('playwright');
 
 /**
  * Weather Watcher - AccuWeather Radar Automation
- * 
+ *
  * This script automates viewing the AccuWeather radar for Nashville, TN:
  * - Opens browser to the weather radar page
  * - Makes the browser full screen
  * - Clicks the full-screen button on the radar UI
  * - Starts the radar animation
  * - Runs for 10 minutes then closes and restarts
+ *
+ * Platform Support:
+ * - macOS: Runs in headed mode for local debugging
+ * - Debian/Docker: Runs with Xvfb virtual display
  */
 
+// Platform configuration from environment
+const PLATFORM = process.env.PLATFORM || 'macos';
+const IS_MACOS = PLATFORM.toLowerCase() === 'macos';
+const IS_DEBIAN = PLATFORM.toLowerCase() === 'debian';
+
+// Constants
 const WEATHER_URL = 'https://www.accuweather.com/en/us/nashville/37243/weather-radar/351090';
 const RUN_DURATION_MS = 10 * 60 * 1000; // 10 minutes in milliseconds
 const RESTART_DELAY_MS = 5000; // 5 seconds between restarts
 const ERROR_RETRY_DELAY_MS = 30000; // 30 seconds retry delay on errors
-const PAGE_LOAD_TIMEOUT_MS = 60000; // 60 seconds timeout for page load
+const PAGE_LOAD_TIMEOUT_MS = 120000; // 120 seconds (2 minutes) timeout for page load - generous for Raspberry Pi
+
+// Log platform configuration
+console.log('=================================');
+console.log('Platform Configuration');
+console.log('=================================');
+console.log(`Platform: ${PLATFORM}`);
+console.log(`Running on macOS: ${IS_MACOS}`);
+console.log(`Running on Debian: ${IS_DEBIAN}`);
+console.log('');
 
 async function runWeatherWatcher() {
     let browser;
@@ -28,16 +48,38 @@ async function runWeatherWatcher() {
         console.log('=================================');
         console.log('');
 
-        // Launch browser
+        // Launch browser with platform-specific configuration
         console.log('Launching browser...');
-        browser = await chromium.launch({
+
+        const launchOptions = {
             headless: false, // Run in headed mode to display the UI
             args: [
-                '--start-fullscreen',
                 '--disable-infobars',
                 '--no-default-browser-check'
             ]
-        });
+        };
+
+        // Platform-specific browser arguments
+        if (IS_MACOS) {
+            // macOS: Use kiosk mode for true fullscreen (better than --start-fullscreen)
+            launchOptions.args.push(
+                '--kiosk',  // True fullscreen mode without browser UI
+                '--start-maximized'
+            );
+            console.log('macOS mode: Browser will open in kiosk fullscreen mode');
+        } else if (IS_DEBIAN) {
+            // Debian/Raspberry Pi: Kiosk mode for physical display
+            // Note: Raspberry Pi has a physical display connected, not headless
+            launchOptions.args.push(
+                '--kiosk',  // True fullscreen mode without browser UI
+                '--start-maximized',
+                '--no-sandbox',  // Required for Raspberry Pi
+                '--disable-setuid-sandbox'  // Required for Raspberry Pi
+            );
+            console.log('Debian/Raspberry Pi mode: Browser will open in kiosk fullscreen mode');
+        }
+
+        browser = await chromium.launch(launchOptions);
 
         // Create a new browser context
         context = await browser.newContext({
@@ -50,14 +92,14 @@ async function runWeatherWatcher() {
 
         // Navigate to AccuWeather radar page
         console.log(`Navigating to ${WEATHER_URL}...`);
-        await page.goto(WEATHER_URL, { 
+        await page.goto(WEATHER_URL, {
             waitUntil: 'domcontentloaded',
-            timeout: PAGE_LOAD_TIMEOUT_MS 
+            timeout: PAGE_LOAD_TIMEOUT_MS
         });
 
-        // Wait for the page to load
-        console.log('Waiting for page to load...');
-        await page.waitForTimeout(5000);
+        // Wait for the page to fully load and render (generous time for Raspberry Pi)
+        console.log('Waiting for page to fully load...');
+        await page.waitForTimeout(10000); // 10 seconds for page to settle
 
         // Try to close any cookie/privacy banners that might appear
         try {
@@ -68,13 +110,13 @@ async function runWeatherWatcher() {
                 'button:has-text("Close")',
                 '[aria-label="Close"]'
             ];
-            
+
             for (const selector of privacyButtons) {
                 const button = await page.$(selector);
                 if (button && await button.isVisible()) {
                     console.log('Closing privacy banner...');
                     await button.click();
-                    await page.waitForTimeout(1000);
+                    await page.waitForTimeout(2000); // Extra time for banner to close
                     break;
                 }
             }
@@ -83,82 +125,38 @@ async function runWeatherWatcher() {
             console.log('No privacy banner to close');
         }
 
-        // Make browser window full screen (F11 key)
-        console.log('Making browser full screen...');
-        await page.keyboard.press('F11');
-        await page.waitForTimeout(2000);
+        // Make browser window full screen
+        // Note: Browser is already launched with --start-fullscreen flag
+        // This additional wait gives time for the window to settle
+        console.log('Browser window is fullscreen...');
+        await page.waitForTimeout(3000); // Extra time for window to settle
 
         // Find and click the full-screen button in the radar UI
         console.log('Looking for full-screen button in radar UI...');
-        
-        // Wait for radar/map to be visible
-        await page.waitForTimeout(3000);
 
-        // Try multiple possible selectors for full-screen button
-        const fullscreenSelectors = [
-            'button[aria-label="Full screen"]',
-            'button[title="Full screen"]',
-            'button[aria-label="Fullscreen"]',
-            'button[title="Fullscreen"]',
-            '.fullscreen-button',
-            '[class*="fullscreen"]',
-            '[data-testid*="fullscreen"]'
-        ];
+        // Wait for radar/map to be fully loaded and visible (generous time for Raspberry Pi)
+        console.log('Waiting for radar to load...');
+        await page.waitForTimeout(8000); // 8 seconds for radar to render
 
-        let fullscreenClicked = false;
-        for (const selector of fullscreenSelectors) {
-            try {
-                const button = await page.$(selector);
-                if (button && await button.isVisible()) {
-                    console.log(`Clicking full-screen button: ${selector}`);
-                    await button.click();
-                    fullscreenClicked = true;
-                    await page.waitForTimeout(2000);
-                    break;
-                }
-            } catch (error) {
-                // Try next selector
-                continue;
-            }
-        }
-
-        if (!fullscreenClicked) {
+        // Click the full-screen button
+        try {
+            await page.locator('.full-screen-button').click();
+            console.log('Clicked full-screen button');
+            await page.waitForTimeout(3000); // Extra time for fullscreen animation
+        } catch (error) {
             console.log('Full-screen button not found, continuing anyway...');
         }
 
         // Find and click the play button
         console.log('Looking for play button...');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(3000); // Extra time before clicking play
 
-        const playSelectors = [
-            'button[aria-label="Play"]',
-            'button[title="Play"]',
-            'button[aria-label="Play animation"]',
-            'button[title="Play animation"]',
-            '.play-button',
-            '[class*="play"]',
-            '[data-testid*="play"]',
-            'button:has-text("Play")'
-        ];
-
-        let playClicked = false;
-        for (const selector of playSelectors) {
-            try {
-                const button = await page.$(selector);
-                if (button && await button.isVisible()) {
-                    console.log(`Clicking play button: ${selector}`);
-                    await button.click();
-                    playClicked = true;
-                    await page.waitForTimeout(1000);
-                    break;
-                }
-            } catch (error) {
-                // Try next selector
-                continue;
-            }
-        }
-
-        if (!playClicked) {
+        // Click the play button
+        try {
+            await page.locator('.play-bar-toggle').click();
+            console.log('Clicked play button');
+            await page.waitForTimeout(2000); // Extra time for animation to start
+        } catch (error) {
             console.log('Play button not found, continuing anyway...');
         }
 
@@ -182,12 +180,12 @@ async function runWeatherWatcher() {
 
     } catch (error) {
         console.error('Error occurred:', error.message);
-        
+
         // Clean up
         if (page) await page.close().catch(() => {});
         if (context) await context.close().catch(() => {});
         if (browser) await browser.close().catch(() => {});
-        
+
         throw error;
     }
 }
@@ -201,11 +199,11 @@ async function main() {
     while (true) {
         try {
             await runWeatherWatcher();
-            
+
             // Brief pause before restarting
             console.log('Waiting 5 seconds before restart...');
             await new Promise(resolve => setTimeout(resolve, RESTART_DELAY_MS));
-            
+
         } catch (error) {
             console.error('Error in weather watcher:', error);
             console.log('Waiting 30 seconds before retry...');
