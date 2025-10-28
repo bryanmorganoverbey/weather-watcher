@@ -99,7 +99,7 @@ async function runWeatherWatcher() {
 
         // Wait for the page to fully load and render (generous time for Raspberry Pi)
         console.log('Waiting for page to fully load...');
-        await page.waitForTimeout(10000); // 10 seconds for page to settle
+        await page.waitForTimeout(15000); // 15 seconds for page to settle and load all resources
 
         // Try to close any cookie/privacy banners that might appear
         try {
@@ -125,11 +125,10 @@ async function runWeatherWatcher() {
             console.log('No privacy banner to close');
         }
 
-        // Make browser window full screen
-        // Note: Browser is already launched with --start-fullscreen flag
-        // This additional wait gives time for the window to settle
-        console.log('Browser window is fullscreen...');
-        await page.waitForTimeout(3000); // Extra time for window to settle
+        // Make browser window full screen with F11 key
+        console.log('Making browser full screen with F11...');
+        await page.keyboard.press('F11');
+        await page.waitForTimeout(5000); // Wait 5 seconds after F11 keypress
 
         // Find and click the full-screen button in the radar UI
         console.log('Looking for full-screen button in radar UI...');
