@@ -191,11 +191,20 @@ xhost +SI:localuser:pi
 
 ### xdotool not found
 
-If you see "xdotool: command not found", install it:
+If you see "xdotool: command not found" or "Unable to locate package xdotool":
+
+**Quick fix:**
 ```bash
 sudo apt-get update
 sudo apt-get install -y xdotool
 ```
+
+**If that doesn't work**, see [XDOTOOL_INSTALL.md](XDOTOOL_INSTALL.md) for detailed installation instructions including:
+- Enabling additional repositories
+- Installing from source
+- Alternative methods
+
+**Note:** The weather-watcher will still work without xdotool. The browser launches with `--start-fullscreen` flag, so you'll get a fullscreen experience. xdotool is only needed for automated F11 toggling.
 
 ### Browser crashes or freezes
 
