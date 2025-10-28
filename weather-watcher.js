@@ -162,10 +162,28 @@ async function runWeatherWatcher() {
         console.log('Making browser full screen with xdotool...');
         try {
             if (IS_DEBIAN) {
-                // On Debian/Raspberry Pi, use xdotool to send F11 key
-                const { stdout, stderr } = await execPromise('xdotool key F11');
-                console.log('Fullscreen toggled via xdotool (F11)');
-                if (stderr) console.log('xdotool stderr:', stderr);
+                // On Debian/Raspberry Pi, use xdotool to focus window and send F11 key
+                // First, find the Chromium window
+                console.log('Finding Chromium window...');
+                const { stdout: windowId } = await execPromise('xdotool search --class chromium | head -1');
+
+                if (windowId && windowId.trim()) {
+                    console.log(`Found Chromium window ID: ${windowId.trim()}`);
+
+                    // Focus the window
+                    await execPromise(`xdotool windowactivate ${windowId.trim()}`);
+                    console.log('Window activated');
+
+                    // Wait a moment for window to focus
+                    await page.waitForTimeout(500);
+
+                    // Send F11 key to the focused window
+                    await execPromise(`xdotool key --window ${windowId.trim()} F11`);
+                    console.log('Fullscreen toggled via xdotool (F11)');
+                } else {
+                    console.log('Could not find Chromium window, trying generic F11...');
+                    await execPromise('xdotool key F11');
+                }
             } else {
                 // On macOS, use JavaScript fullscreen API
                 await page.evaluate(() => {
