@@ -1,5 +1,8 @@
 require('dotenv').config();
 const { chromium } = require('playwright');
+const { exec } = require('child_process');
+const util = require('util');
+const execPromise = util.promisify(exec);
 
 /**
  * Weather Watcher - AccuWeather Radar Automation
@@ -154,18 +157,27 @@ async function runWeatherWatcher() {
             console.log('Play button not found, continuing anyway...');
         }
 
-        // Make browser window full screen using JavaScript (after play is clicked)
-        // This is more reliable than F11 which may require Fn key on some keyboards
-        console.log('Making browser full screen...');
+        // Make browser window full screen using xdotool (after play is clicked)
+        // xdotool simulates F11 keypress at system level, bypassing Fn key requirements
+        console.log('Making browser full screen with xdotool...');
         try {
-            await page.evaluate(() => {
-                if (document.documentElement.requestFullscreen) {
-                    document.documentElement.requestFullscreen();
-                }
-            });
-            console.log('Fullscreen requested via JavaScript');
+            if (IS_DEBIAN) {
+                // On Debian/Raspberry Pi, use xdotool to send F11 key
+                const { stdout, stderr } = await execPromise('xdotool key F11');
+                console.log('Fullscreen toggled via xdotool (F11)');
+                if (stderr) console.log('xdotool stderr:', stderr);
+            } else {
+                // On macOS, use JavaScript fullscreen API
+                await page.evaluate(() => {
+                    if (document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen();
+                    }
+                });
+                console.log('Fullscreen requested via JavaScript');
+            }
         } catch (error) {
-            console.log('Could not request fullscreen, continuing anyway...');
+            console.log('Could not request fullscreen:', error.message);
+            console.log('Continuing anyway...');
         }
         await page.waitForTimeout(5000); // Wait 5 seconds for fullscreen transition
 

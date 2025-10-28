@@ -26,6 +26,7 @@ chmod +x install.sh
 ```
 
 The installation script will:
+- Install system dependencies (xdotool for fullscreen control)
 - Install Node.js LTS
 - Install all dependencies (playwright, dotenv)
 - Install Chromium browser
@@ -186,6 +187,14 @@ xhost +
 Run with proper permissions:
 ```bash
 xhost +SI:localuser:pi
+```
+
+### xdotool not found
+
+If you see "xdotool: command not found", install it:
+```bash
+sudo apt-get update
+sudo apt-get install -y xdotool
 ```
 
 ### Browser crashes or freezes

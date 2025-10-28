@@ -15,8 +15,15 @@ if [[ "$OSTYPE" != "linux-gnu"* ]]; then
     echo "Warning: This script is designed for Linux systems (Raspberry Pi)"
 fi
 
+# Install system dependencies
+echo "Step 1: Installing system dependencies..."
+echo ""
+sudo apt-get update
+sudo apt-get install -y xdotool curl
+echo ""
+
 # Install Node.js using NodeSource repository
-echo "Step 1: Installing Node.js (latest LTS version)..."
+echo "Step 2: Installing Node.js (latest LTS version)..."
 echo ""
 
 # Remove old NodeSource repository if it exists
@@ -42,14 +49,14 @@ npm --version
 echo ""
 
 # Install project dependencies
-echo "Step 2: Installing project dependencies..."
+echo "Step 3: Installing project dependencies..."
 echo ""
 cd "$(dirname "$0")"
 npm install
 
 # Install Playwright browsers
 echo ""
-echo "Step 3: Installing Playwright browsers..."
+echo "Step 4: Installing Playwright browsers..."
 echo "Note: This may take several minutes..."
 echo ""
 npx playwright install chromium
@@ -57,7 +64,7 @@ npx playwright install-deps chromium
 
 # Create .env file for Raspberry Pi
 echo ""
-echo "Step 4: Creating environment configuration..."
+echo "Step 5: Creating environment configuration..."
 echo ""
 if [ ! -f .env ]; then
     echo "Creating .env file for Raspberry Pi..."

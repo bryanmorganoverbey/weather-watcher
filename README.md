@@ -70,11 +70,12 @@ npm start
 ```
 
 The installation script will automatically:
-1. Install the latest LTS version of Node.js
-2. Install project dependencies (including dotenv)
-3. Install Playwright and Chromium browser
-4. Install all necessary system dependencies
-5. Create a `.env` file configured for Raspberry Pi (`PLATFORM=debian`)
+1. Install system dependencies (xdotool for fullscreen control)
+2. Install the latest LTS version of Node.js
+3. Install project dependencies (including dotenv)
+4. Install Playwright and Chromium browser
+5. Install all necessary system dependencies
+6. Create a `.env` file configured for Raspberry Pi (`PLATFORM=debian`)
 
 **📖 For complete Raspberry Pi setup including auto-start on boot, see [RASPBERRY_PI_SETUP.md](RASPBERRY_PI_SETUP.md)**
 
