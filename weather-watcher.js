@@ -125,11 +125,6 @@ async function runWeatherWatcher() {
             console.log('No privacy banner to close');
         }
 
-        // Make browser window full screen with F11 key
-        console.log('Making browser full screen with F11...');
-        await page.keyboard.press('F11');
-        await page.waitForTimeout(5000); // Wait 5 seconds after F11 keypress
-
         // Find and click the full-screen button in the radar UI
         console.log('Looking for full-screen button in radar UI...');
 
@@ -158,6 +153,11 @@ async function runWeatherWatcher() {
         } catch (error) {
             console.log('Play button not found, continuing anyway...');
         }
+
+        // Make browser window full screen with F11 key (after play is clicked)
+        console.log('Making browser full screen with F11...');
+        await page.keyboard.press('F11');
+        await page.waitForTimeout(5000); // Wait 5 seconds after F11 keypress
 
         // Run for 10 minutes
         console.log('');
