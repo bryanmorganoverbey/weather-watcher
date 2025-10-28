@@ -157,12 +157,28 @@ async function runWeatherWatcher() {
                     // Wait a moment for window to focus
                     await page.waitForTimeout(500);
 
-                    // Send F11 key to the focused window
+                    // Try F11 first
+                    console.log('Attempting F11...');
                     await execPromise(`xdotool key --window ${windowId.trim()} F11`);
-                    console.log('Fullscreen toggled via xdotool (F11)');
+                    await page.waitForTimeout(1000);
+
+                    // Try Fn+F11 combination (some keyboards require this)
+                    console.log('Attempting Fn+F11...');
+                    await execPromise(`xdotool key --window ${windowId.trim()} XF86Switch_VT_11`);
+                    await page.waitForTimeout(1000);
+
+                    // Try alternative Fn+F11 mapping
+                    console.log('Attempting alternative Fn+F11...');
+                    await execPromise(`xdotool key --window ${windowId.trim()} Super_L+F11`);
+
+                    console.log('Fullscreen toggle attempts completed');
                 } else {
-                    console.log('Could not find Chromium window, trying generic F11...');
+                    console.log('Could not find Chromium window, trying generic keypresses...');
                     await execPromise('xdotool key F11');
+                    await page.waitForTimeout(1000);
+                    await execPromise('xdotool key XF86Switch_VT_11');
+                    await page.waitForTimeout(1000);
+                    await execPromise('xdotool key Super_L+F11');
                 }
             } else {
                 // On macOS, use JavaScript fullscreen API
