@@ -64,22 +64,22 @@ async function runWeatherWatcher() {
 
         // Platform-specific browser arguments
         if (IS_MACOS) {
-            // macOS: Use kiosk mode for true fullscreen (better than --start-fullscreen)
+            // macOS: Start fullscreen (allows F11 to work, unlike --kiosk)
             launchOptions.args.push(
-                '--kiosk',  // True fullscreen mode without browser UI
+                '--start-fullscreen',  // Fullscreen mode that responds to F11
                 '--start-maximized'
             );
-            console.log('macOS mode: Browser will open in kiosk fullscreen mode');
+            console.log('macOS mode: Browser will open in fullscreen mode');
         } else if (IS_DEBIAN) {
-            // Debian/Raspberry Pi: Kiosk mode for physical display
-            // Note: Raspberry Pi has a physical display connected, not headless
+            // Debian/Raspberry Pi: Start fullscreen for physical display
+            // Note: NOT using --kiosk so F11 key will work
             launchOptions.args.push(
-                '--kiosk',  // True fullscreen mode without browser UI
+                '--start-fullscreen',  // Fullscreen mode that responds to F11
                 '--start-maximized',
                 '--no-sandbox',  // Required for Raspberry Pi
                 '--disable-setuid-sandbox'  // Required for Raspberry Pi
             );
-            console.log('Debian/Raspberry Pi mode: Browser will open in kiosk fullscreen mode');
+            console.log('Debian/Raspberry Pi mode: Browser will open in fullscreen mode (F11 enabled)');
         }
 
         browser = await chromium.launch(launchOptions);
