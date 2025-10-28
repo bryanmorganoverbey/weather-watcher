@@ -62,26 +62,6 @@ async function runWeatherWatcher() {
             ]
         };
 
-        // Platform-specific browser arguments
-        if (IS_MACOS) {
-            // macOS: Start fullscreen (allows F11 to work, unlike --kiosk)
-            launchOptions.args.push(
-                '--start-fullscreen',  // Fullscreen mode that responds to F11
-                '--start-maximized'
-            );
-            console.log('macOS mode: Browser will open in fullscreen mode');
-        } else if (IS_DEBIAN) {
-            // Debian/Raspberry Pi: Start fullscreen for physical display
-            // Note: NOT using --kiosk so F11 key will work
-            launchOptions.args.push(
-                '--start-fullscreen',  // Fullscreen mode that responds to F11
-                '--start-maximized',
-                '--no-sandbox',  // Required for Raspberry Pi
-                '--disable-setuid-sandbox'  // Required for Raspberry Pi
-            );
-            console.log('Debian/Raspberry Pi mode: Browser will open in fullscreen mode (F11 enabled)');
-        }
-
         browser = await chromium.launch(launchOptions);
 
         // Create a new browser context
