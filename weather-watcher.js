@@ -143,15 +143,39 @@ async function runWeatherWatcher() {
         try {
             if (IS_DEBIAN) {
                 // On Debian/Raspberry Pi, use xdotool to focus window and send F11 key
-                // First, find the Chromium window
-                console.log('Finding Chromium window...');
-                const { stdout: windowId } = await execPromise('xdotool search --class chromium | head -1');
+                // Try multiple methods to find the browser window
+                console.log('Finding browser window...');
 
-                if (windowId && windowId.trim()) {
-                    console.log(`Found Chromium window ID: ${windowId.trim()}`);
+                let windowId = null;
 
+                // Try multiple search strategies
+                const searchStrategies = [
+                    'xdotool search --class chromium | head -1',
+                    'xdotool search --class Chromium | head -1',
+                    'xdotool search --classname chromium | head -1',
+                    'xdotool search --name "AccuWeather" | head -1',
+                    'xdotool search --name "Chromium" | head -1',
+                    'xdotool getactivewindow'  // Get currently active window as fallback
+                ];
+
+                for (const strategy of searchStrategies) {
+                    try {
+                        console.log(`Trying: ${strategy}`);
+                        const { stdout } = await execPromise(strategy);
+                        if (stdout && stdout.trim()) {
+                            windowId = stdout.trim();
+                            console.log(`Found window ID: ${windowId} using: ${strategy}`);
+                            break;
+                        }
+                    } catch (err) {
+                        // Try next strategy
+                        continue;
+                    }
+                }
+
+                if (windowId) {
                     // Focus the window
-                    await execPromise(`xdotool windowactivate ${windowId.trim()}`);
+                    await execPromise(`xdotool windowactivate ${windowId}`);
                     console.log('Window activated');
 
                     // Wait a moment for window to focus
@@ -159,21 +183,21 @@ async function runWeatherWatcher() {
 
                     // Try F11 first
                     console.log('Attempting F11...');
-                    await execPromise(`xdotool key --window ${windowId.trim()} F11`);
+                    await execPromise(`xdotool key --window ${windowId} F11`);
                     await page.waitForTimeout(1000);
 
                     // Try Fn+F11 combination (some keyboards require this)
                     console.log('Attempting Fn+F11...');
-                    await execPromise(`xdotool key --window ${windowId.trim()} XF86Switch_VT_11`);
+                    await execPromise(`xdotool key --window ${windowId} XF86Switch_VT_11`);
                     await page.waitForTimeout(1000);
 
                     // Try alternative Fn+F11 mapping
                     console.log('Attempting alternative Fn+F11...');
-                    await execPromise(`xdotool key --window ${windowId.trim()} Super_L+F11`);
+                    await execPromise(`xdotool key --window ${windowId} Super_L+F11`);
 
                     console.log('Fullscreen toggle attempts completed');
                 } else {
-                    console.log('Could not find Chromium window, trying generic keypresses...');
+                    console.log('Could not find browser window, trying generic keypresses to active window...');
                     await execPromise('xdotool key F11');
                     await page.waitForTimeout(1000);
                     await execPromise('xdotool key XF86Switch_VT_11');
