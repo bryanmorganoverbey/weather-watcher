@@ -13,6 +13,9 @@ const { chromium } = require('playwright');
 
 const WEATHER_URL = 'https://www.accuweather.com/en/us/nashville/37243/weather-radar/351090';
 const RUN_DURATION_MS = 10 * 60 * 1000; // 10 minutes in milliseconds
+const RESTART_DELAY_MS = 5000; // 5 seconds between restarts
+const ERROR_RETRY_DELAY_MS = 30000; // 30 seconds retry delay on errors
+const PAGE_LOAD_TIMEOUT_MS = 60000; // 60 seconds timeout for page load
 
 async function runWeatherWatcher() {
     let browser;
@@ -49,7 +52,7 @@ async function runWeatherWatcher() {
         console.log(`Navigating to ${WEATHER_URL}...`);
         await page.goto(WEATHER_URL, { 
             waitUntil: 'domcontentloaded',
-            timeout: 60000 
+            timeout: PAGE_LOAD_TIMEOUT_MS 
         });
 
         // Wait for the page to load
@@ -201,12 +204,12 @@ async function main() {
             
             // Brief pause before restarting
             console.log('Waiting 5 seconds before restart...');
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            await new Promise(resolve => setTimeout(resolve, RESTART_DELAY_MS));
             
         } catch (error) {
             console.error('Error in weather watcher:', error);
             console.log('Waiting 30 seconds before retry...');
-            await new Promise(resolve => setTimeout(resolve, 30000));
+            await new Promise(resolve => setTimeout(resolve, ERROR_RETRY_DELAY_MS));
         }
     }
 }
