@@ -20,7 +20,23 @@ const execPromise = util.promisify(exec);
  */
 
 // Platform configuration from environment
-const PLATFORM = process.env.PLATFORM || 'macos';
+let PLATFORM = process.env.PLATFORM;
+
+// Auto-detect platform if not set
+if (!PLATFORM) {
+    console.log('PLATFORM not set in environment, auto-detecting...');
+    if (process.platform === 'darwin') {
+        PLATFORM = 'macos';
+        console.log('Detected macOS');
+    } else if (process.platform === 'linux') {
+        PLATFORM = 'debian';
+        console.log('Detected Linux/Debian');
+    } else {
+        PLATFORM = 'macos'; // Default fallback
+        console.log(`Unknown platform: ${process.platform}, defaulting to macos`);
+    }
+}
+
 const IS_MACOS = PLATFORM.toLowerCase() === 'macos';
 const IS_DEBIAN = PLATFORM.toLowerCase() === 'debian';
 
@@ -35,9 +51,11 @@ const PAGE_LOAD_TIMEOUT_MS = 120000; // 120 seconds (2 minutes) timeout for page
 console.log('=================================');
 console.log('Platform Configuration');
 console.log('=================================');
-console.log(`Platform: ${PLATFORM}`);
-console.log(`Running on macOS: ${IS_MACOS}`);
-console.log(`Running on Debian: ${IS_DEBIAN}`);
+console.log(`PLATFORM env var: ${process.env.PLATFORM || '(not set)'}`);
+console.log(`Detected OS: ${process.platform}`);
+console.log(`Using Platform: ${PLATFORM}`);
+console.log(`IS_MACOS: ${IS_MACOS}`);
+console.log(`IS_DEBIAN: ${IS_DEBIAN}`);
 console.log('');
 
 async function runWeatherWatcher() {
